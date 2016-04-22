@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import ParKingServer
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
+
+# make sure that it is being used properly
+if len(sys.argv) != 2:
+    print "usage: ./run <service port>"
+    sys.exit()
+
+# extract the script and service port from the args
+script, service_port = sys.argv
+service_port = int(service_port)
+
+try:
+    parking_server = ParKingServer.ParKingServer(service_port, False)
+    parking_server.start_listening()
+except KeyboardInterrupt:
+    parking_server.write_to_log('KeyboardInterrupt detected, shutting down.')
+
+parking_server.tear_down()
+
+print 'Have a great day :D'
+sys.exit()
