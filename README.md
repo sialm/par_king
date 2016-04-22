@@ -11,16 +11,16 @@ The long term plan is to build a mobile app that can link in with this project a
 ```bash
 $ git clone git@github.com:sialm/par_king.git
 ```
-    server:
-        ```bash
-        $ ./par_king/server/run <port number>
-        ```
+server:
+```bash
+$ ./par_king/server/run <port number>
+```
 
-    client:
-        set the values in the `client/config`
-        ```bash
-        $ ./par_king/client/run <sever ip> <server port number>
-        ```
+client:
+set the values in the `client/config`
+```bash
+$ ./par_king/client/run <sever ip> <server port number>
+```
 
 
 ## API Reference
