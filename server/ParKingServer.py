@@ -43,8 +43,8 @@ class ParKingServer:
             self.write_to_log('Creating listening socket on port ' + str(self.service_port))
             self.listening_socket.bind((self.this_host_ip, self.service_port))
             self.listening_socket.listen(8)
-            print self.get_timestamp_string() + ' - Server listening on ' + self.this_host_ip + ':' + str(self.service_port)
-            print'socket creation successful.'
+            print(self.get_timestamp_string() + ' - Server listening on ' + self.this_host_ip + ':' + str(self.service_port))
+            print('socket creation successful.')
             self.running = True
             self.accept_requests()
         except Exception as e:
@@ -150,4 +150,4 @@ class ParKingServer:
             self.write_data(data)
 
     def write_data(self, data):
-        print data
+        print(data)
