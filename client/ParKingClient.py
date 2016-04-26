@@ -1,21 +1,35 @@
 # from i2clibraries import i2c_hmc58831
-import socket
+from socket import socket
+from socket import AF_INET
+from socket import SOCK_STREAM
+from socket import error as socket_error
 from time import sleep
 from time import time
 from struct import pack
 from datetime import datetime
-import threading
+from threading import Thread
+from json import encoder
+import config
 from i2clibraries import i2c_hmc5883l
 
 class ParKingClient:
+    START_CONNECTION = 1
+    ALIVE = 2
+    INCOMING = 3
+    OUTGOING = 4
+    SHUTTING_DOWN = 5
+
     THRESHOLD = 4
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
-
     def __init__(self, service_port, host_ip, data_log_mode=False):
-        # self.hmc58831 = i2c_hmc58831.i2c_hmc58831(1)
-        # self.hmc58831.setContinousMode()
-        # self.hmc58831.setDeclination(0,6)
+        '''
+        This will create a ParKingClient
+        :param service_port:
+        :param host_ip:
+        :param data_log_mode:
+        :return:
+        '''
         self.data_log_mode = data_log_mode
         if self.data_log_mode:
             self.log_file = self.create_logs()
@@ -25,7 +39,7 @@ class ParKingClient:
         self.service_port = service_port
         self.running = False
 
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock = socket(AF_INET, SOCK_STREAM)
         self.connect()
         self.sensor = i2c_hmc5883l.i2c_hmc5883l(1)
         self.sensor.setContinuousMode()
@@ -42,7 +56,7 @@ class ParKingClient:
         """
         try:
             file_name = 'log_file_' + self.get_time_stamp()
-            log_file = open(file_namdefe, 'w')
+            log_file = open(file_name, 'w')
             return log_file
         except Exception as e:
             self.tear_down()
@@ -64,7 +78,7 @@ class ParKingClient:
     def connect(self):
         try:
             self.sock.connect((self.host_ip, self.service_port))
-        except socket.error as e:
+        except socket_error as e:
             if self.sock:
                 self.sock.close()
             print("what the what? all things are broken: " + e.message)
@@ -77,7 +91,6 @@ class ParKingClient:
     def run(self):
         self.running = True
 
-        print('*****************************')        
         for i in range(100):
             (x,y,z) = self.read_from_sensor()
             self.z_base_line = self.z_base_line*.95 + .05*z
@@ -95,11 +108,7 @@ class ParKingClient:
                 z_max = max(z_val, z_max)
 
                 if z_val < self.THRESHOLD:
-                    print('#######################################')
-                    print('x : ' + str(x))
-                    print('y : ' + str(y))
-                    print('z : ' + str(z))
-                    t = threading.Thread(target=self.pack_and_send, args=(z_max, ))
+                    t = Thread(target=self.pack_and_send, args=(z_max, ))
                     t.daemon = True
                     t.start()
 
@@ -112,7 +121,6 @@ class ParKingClient:
         encoding = '!' + str(len(payload)) + 's'
         payload = payload.encode('utf-8')
         packet = pack(encoding, payload)
-
         self.sock.sendall(packet)
 
     def get_time_stamp(self):
