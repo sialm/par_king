@@ -193,29 +193,23 @@ class ParKingClient:
             z_max_1 = z_val_1
             z_max_2 = z_val_2
 
-            # TODO fix this method, badness 1000000
-
             if z_val_1 > self.THRESHOLD:
-                while True:
-                    print 'why?'
+                self.goes_in_helper(z_val_1)
             elif z_val_2 > self.THRESHOLD:
-                while z_val > self.THRESHOLD:
-                    sleep(0.05)
-                    (x,y,z) = self.read_from_sensor()
-                    z_val = z - self.z_base_line
-                    z_max = max(z_val, z_max)
+                self.goes_out_helper(z_val_2)
+                
+    def goes_in_helper(self, z_val_1):
+        # TODO mik fix me
+        print 'Mik fix me'
 
-                    if z_val < self.THRESHOLD:
-                        t = Thread(target=self.pack_and_send, args=(z_max, ))
-                        t.daemon = True
-                        t.start()
-
-                self.z_base_line = self.z_base_line*.95 + .05*z
+    def goes_out_helper(self, z_val_2):
+        # TODO mik fix me
+        print 'Mik fix me'
 
     def keep_alive(self):
         while True:
-            sleep(config.ALIVE_SLEEP)
             self.send_alive_packet()
+            sleep(config.ALIVE_SLEEP)
 
 #######################################################################################################################
 #                           NETWORK METHODS
