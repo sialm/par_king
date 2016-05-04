@@ -200,11 +200,11 @@ class ParKingClient:
 
     def goes_in_helper(self, z_val_1):
         # TODO mik fix me
-        print 'Mik fix me'
+        self.send_goes_in_packet(z_val_1)
 
     def goes_out_helper(self, z_val_2):
         # TODO mik fix me
-        print 'Mik fix me'
+        self.send_goes_out_packet(z_val_2)
 
     def keep_alive(self):
         while True:
