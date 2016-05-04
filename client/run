@@ -6,16 +6,16 @@ from sys import exit
 
 
 # make sure that it is being used properly
-if len(argv) != 3:
-    print "usage: ./run <ip address> <service port>"
+if len(argv) != 4:
+    print "usage: ./run <ip address> <service port> <spots available>"
     exit()
 
 # extract the script and service port from the args
-script, listening_ip, service_port = argv
+script, listening_ip, service_port, spots_available = argv
 service_port = int(service_port)
 
 try:
-    parking_client = ParKingClient.ParKingClient(service_port, listening_ip, True)
+    parking_client = ParKingClient.ParKingClient(service_port, listening_ip, spots_available, True)
     parking_client.run()
 except KeyboardInterrupt:
     parking_client.write_to_log('KeyboardInterrupt detected, shutting down.')

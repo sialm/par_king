@@ -8,8 +8,8 @@ from time import time
 from struct import pack
 from datetime import datetime
 from threading import Thread
-from json import encoder
 import config
+from ParKingPacket import ParKingPacket
 from i2clibraries import i2c_hmc5883l
 
 class ParKingClient:
@@ -22,7 +22,11 @@ class ParKingClient:
     THRESHOLD = 4
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
-    def __init__(self, service_port, host_ip, data_log_mode=False):
+#######################################################################################################################
+#                           SETUP METHODS
+#######################################################################################################################
+
+    def __init__(self, service_port, host_ip, spots_available, data_log_mode=False):
         '''
         This will create a ParKingClient
         :param service_port:
@@ -41,13 +45,26 @@ class ParKingClient:
 
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.connect()
-        self.sensor = i2c_hmc5883l.i2c_hmc5883l(1)
-        self.sensor.setContinuousMode()
-        self.sensor.setDeclination(0,6)
+        self.send_init_packet(spots_available)
+
+        alive_thread = Thread(target=self.keep_alive, args=())
+        alive_thread.daemon = True
+        alive_thread.start()
+
+        self.sensor_1 = i2c_hmc5883l.i2c_hmc5883l(1)
+        self.sensor_1.setContinuousMode()
+        self.sensor_1.setDeclination(0,6)
+        self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(2)
+        self.sensor_2.setContinuousMode()
+        self.sensor_2.setDeclination(0,6)
         sleep(2)
-        (x, y, z) = self.read_from_sensor()
-        self.z_base_line = z
-        self.last_z_signal = 0
+
+        (x, y, z) = self.read_from_sensor_1()
+        self.z_base_line_1 = z
+        self.last_z_signal_1 = 0
+        (x, y, z) = self.read_from_sensor_2()
+        self.z_base_line_2 = z
+        self.last_z_signal_2 = 0
 
     def create_logs(self):
         """
@@ -84,44 +101,139 @@ class ParKingClient:
             print("what the what? all things are broken: " + e.message)
             self.tear_down()
 
-    def read_from_sensor(self):
-        vals = self.sensor.getAxes()
+    def read_from_sensor_1(self):
+        vals = self.sensor_1.getAxes()
         return vals
+
+    def read_from_sensor_2(self):
+        vals = self.sensor_2.getAxes()
+        return vals
+
+#######################################################################################################################
+#                           RUN METHODS
+#######################################################################################################################
 
     def run(self):
         self.running = True
 
+        if (config.SENSOR_CONFIG is config.ONE_LANE):
+            self.run_one_lane()
+        elif (config.SENSOR_CONFIG is config.TWO_LANE):
+            goes_in_thread = Thread(target=self.run_in_lane, args=())
+            goes_in_thread.daemon = True
+            goes_in_thread.start()
+            goes_out_thread = Thread(target=self.run_out_lane, args=())
+            goes_out_thread.daemon = True
+            goes_out_thread.start()
+
+    def run_in_lane(self):
         for i in range(100):
-            (x,y,z) = self.read_from_sensor()
-            self.z_base_line = self.z_base_line*.95 + .05*z
+            # calibrate sensor
+            (x,y,z_1) = self.read_from_sensor_1()
+            self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
             sleep(0.05)
 
         while self.running:
             sleep(0.05)
-            (x,y,z) = self.read_from_sensor()
-            z_val = z - self.z_base_line
-            z_max = z_val
-            while z_val > self.THRESHOLD:
-                sleep(0.05)
-                (x,y,z) = self.read_from_sensor()
-                z_val = z - self.z_base_line
-                z_max = max(z_val, z_max)
+            (x,y,z_1) = self.read_from_sensor_1()
+            z_val_1 = z_1 - self.z_base_line_1
+            z_max_1 = z_val_1
 
-                if z_val < self.THRESHOLD:
-                    t = Thread(target=self.pack_and_send, args=(z_max, ))
+            while z_val_1 > self.THRESHOLD:
+                sleep(0.05)
+                (x,y,z_1) = self.read_from_sensor_1()
+                z_val_1 = z_1 - self.z_base_line_1
+                z_max_1 = max(z_val_1, z_max_1)
+
+                if z_val_1 < self.THRESHOLD:
+                    t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
                     t.daemon = True
                     t.start()
 
-            self.z_base_line = self.z_base_line*.95 + .05*z
+            self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
 
-    def pack_and_send(self, value):
-        right_meow = self.get_time_stamp()
-        payload = right_meow + ' VALUE : ' + str(value)
-        print('payload : ' + payload)
-        encoding = '!' + str(len(payload)) + 's'
-        payload = payload.encode('utf-8')
-        packet = pack(encoding, payload)
+    def run_out_lane(self):
+        for i in range(100):
+        # calibrate sensor
+            (x,y,z_2) = self.read_from_sensor_2()
+            self.z_base_line_2 = self.z_base_line_1*.95 + .05*z_2
+            sleep(0.05)
+
+        while self.running:
+            sleep(0.05)
+            (x,y,z_2) = self.read_from_sensor_2()
+            z_val_2 = z_2 - self.z_base_line_2
+            z_max_2 = z_val_2
+
+            while z_val_2 > self.THRESHOLD:
+                sleep(0.05)
+                (x,y,z_2) = self.read_from_sensor_2()
+                z_val_2 = z_2 - self.z_base_line_2
+                z_max_2 = max(z_val_2, z_max_2)
+
+                if z_val_2 < self.THRESHOLD:
+                    t = Thread(target=self.send_goes_out_packet, args=(z_max_2, ))
+                    t.daemon = True
+                    t.start()
+
+            self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
+
+    def run_one_lane(self):
+        (x,y,z_1) = self.read_from_sensor_1()
+        (x,y,z_2) = self.read_from_sensor_2()
+        self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
+        self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
+        sleep(0.05)
+        while self.running:
+            sleep(0.05)
+            (x,y,z_1) = self.read_from_sensor_1()
+            (x,y,z_2) = self.read_from_sensor_2()
+            z_val_1 = z_1 - self.z_base_line_1
+            z_val_2 = z_2 - self.z_base_line_2
+            z_max_1 = z_val_1
+            z_max_2 = z_val_2
+
+            if z_val_1 > self.THRESHOLD:
+                self.goes_in_helper(z_val_1)
+            elif z_val_2 > self.THRESHOLD:
+                self.goes_out_helper(z_val_2)
+                
+    def goes_in_helper(self, z_val_1):
+        # TODO mik fix me
+        print 'Mik fix me'
+
+    def goes_out_helper(self, z_val_2):
+        # TODO mik fix me
+        print 'Mik fix me'
+
+    def keep_alive(self):
+        while True:
+            self.send_alive_packet()
+            sleep(config.ALIVE_SLEEP)
+
+#######################################################################################################################
+#                           NETWORK METHODS
+#######################################################################################################################
+
+    def send_init_packet(self, spots_available):
+        packet = ParKingPacket.pack_init_packet(config.UNIQUE_ID, config.CAPACITY, spots_available)
         self.sock.sendall(packet)
+
+    def send_goes_out_packet(self, z_value):
+        packet = ParKingPacket.pack_out_packet(config.UNIQUE_ID, z_value)
+        self.sock.sendall(packet)
+
+    def send_goes_in_packet(self, z_value):
+        packet = ParKingPacket.pack_in_packet(config.UNIQUE_ID, z_value)
+        self.sock.sendall(packet)
+
+    def send_alive_packet(self):
+        packet = ParKingPacket.pack_alive_packet(config.UNIQUE_ID)
+        self.sock.sendall(packet)
+
+#######################################################################################################################
+#                           LOGGING METHODS
+#######################################################################################################################
 
     def get_time_stamp(self):
         return datetime.fromtimestamp(time()).strftime(self.TIME_FORMAT_STRING)
