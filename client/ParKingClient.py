@@ -197,7 +197,7 @@ class ParKingClient:
                 self.goes_in_helper(z_val_1)
             elif z_val_2 > self.THRESHOLD:
                 self.goes_out_helper(z_val_2)
-                
+
     def goes_in_helper(self, z_val_1):
         # TODO mik fix me
         print 'Mik fix me'
