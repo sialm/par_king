@@ -21,22 +21,24 @@ class ParKingPacket:
         packet = pack(self.ENCODING, self.MESSAGE_TYPE_INIT, lot_id, capacity, vacancies)
         return packet
 
-    def pack_in_packet(self, lot_id):
+    def pack_in_packet(self, lot_id, z_value):
         """
         packs the in packet as defined by the par king protocol
         :param lot_id:
+        :param z_value:
         :return:
         """
-        packet = pack(self.ENCODING, self.MESSAGE_TYPE_IN, lot_id, self.PADDING, self.PADDING)
+        packet = pack(self.ENCODING, self.MESSAGE_TYPE_IN, lot_id, z_value, self.PADDING)
         return packet
 
-    def pack_out_packet(self, lot_id):
+    def pack_out_packet(self, lot_id, z_value):
         """
         packs the out packet as defined by the par king protocol
         :param lot_id:
+        :param z_value
         :return:
         """
-        packet = pack(self.ENCODING, self.MESSAGE_TYPE_OUT, lot_id, self.PADDING, self.PADDING)
+        packet = pack(self.ENCODING, self.MESSAGE_TYPE_OUT, lot_id, z_value, self.PADDING)
         return packet
 
     def pack_alive_packet(self, lot_id):
