@@ -9,7 +9,7 @@ from struct import pack
 from datetime import datetime
 from threading import Thread
 import config
-from ParKingPacket import ParKingPacket
+import ParKingPacket
 from i2clibraries import i2c_hmc5883l
 
 class ParKingClient:
