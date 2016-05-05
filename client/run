@@ -13,6 +13,7 @@ if len(argv) != 4:
 # extract the script and service port from the args
 script, listening_ip, service_port, spots_available = argv
 service_port = int(service_port)
+spots_available = int(spots_available)
 
 try:
     parking_client = ParKingClient.ParKingClient(service_port, listening_ip, spots_available, True)
