@@ -4,6 +4,7 @@ from time import time
 from datetime import datetime
 import sys
 from struct import unpack
+from ParKingPacket import ParKingPacket
 
 class ParKingServer:
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
@@ -11,7 +12,7 @@ class ParKingServer:
     ####################################################################################################################
     #                                               Set up / Tear down                                                 #
     ####################################################################################################################
-    def __init__(self, service_port, data_log_mode=False):
+    def __init__(self, service_port, data_log_mode = False):
         """
         Creates a new proxy service on the designated port.
         :param service_port:
@@ -20,6 +21,7 @@ class ParKingServer:
         """
         self.data_log_mode = data_log_mode
         self.running = False
+        self.parking_lots = []
         if self.data_log_mode:
             self.log_file = self.create_logs()
         else:
@@ -92,7 +94,7 @@ class ParKingServer:
             try:
                 client_socket, client_addr = self.listening_socket.accept()
                 print('connection made to : ' + str(client_addr))
-                t = threading.Thread(target=self.acceptor, args=(client_socket, client_addr,))
+                t = threading.Thread(target=self.handle_client_traffic, args=(client_socket, client_addr,))
                 t.daemon = True
                 t.start()
             except Exception as e:
@@ -132,10 +134,9 @@ class ParKingServer:
     #                                               Methods that do stuff                                              #
     ####################################################################################################################
 
-    def acceptor(self, client_socket, client_addr):
+    def handle_client_traffic(self, client_socket, client_addr):
         """
-        The ACCEPTOR method will branch appropriately for connects vs request and pass the data off the methods that
-        will each branch
+        This method will handle incoming traffic from a given client.
         :param client_socket:
         :param client_addr:
         :return:
@@ -147,7 +148,19 @@ class ParKingServer:
             encoding = '!' + str(len(data)) +'s'
             data = unpack(encoding, data)
 
-            self.write_data(data)
+            self.handle_packet(data)
 
-    def write_data(self, data):
-        print(data)
+    def handle_packet(self, packet):
+        (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(packet)
+        print("**********************************************")
+        print("LOT ID : " + str(lot_id))
+        if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
+            print("ALIVE")
+        elif message_type is ParKingPacket.MESSAGE_TYPE_IN:
+            print("GOES INS")
+        elif message_type is ParKingPacket.MESSAGE_TYPE_OUT:
+            print("GOES OUTS")
+        elif message_type is ParKingPacket.MESSAGE_TYPE_INIT:
+            print("INIT")
+            print("CAP : " + str(capacity))
+            print("VAC : " + str(vacancies))
