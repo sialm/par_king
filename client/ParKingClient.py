@@ -47,16 +47,23 @@ class ParKingClient:
         self.connect()
         self.send_init_packet(spots_available)
 
+
         alive_thread = Thread(target=self.keep_alive, args=())
         alive_thread.daemon = True
         alive_thread.start()
 
+        self.write_to_log('creating sensor 1')
         self.sensor_1 = i2c_hmc5883l.i2c_hmc5883l(1)
         self.sensor_1.setContinuousMode()
         self.sensor_1.setDeclination(0,6)
+        self.write_to_log('sensor one created')
+
+        self.write_to_log('creating sensor 2')
         self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(2)
         self.sensor_2.setContinuousMode()
         self.sensor_2.setDeclination(0,6)
+        self.write_to_log('sensor two created')
+        
         sleep(2)
 
         (x, y, z) = self.read_from_sensor_1()
@@ -94,12 +101,14 @@ class ParKingClient:
 
     def connect(self):
         try:
+            self.write_to_log('opening socket')
             self.sock.connect((self.host_ip, self.service_port))
         except socket_error as e:
             if self.sock:
                 self.sock.close()
             print("what the what? all things are broken: " + e.message)
             self.tear_down()
+        self.write_to_log('socket opened!')
 
     def read_from_sensor_1(self):
         vals = self.sensor_1.getAxes()
@@ -216,8 +225,10 @@ class ParKingClient:
 #######################################################################################################################
 
     def send_init_packet(self, spots_available):
+        self.write_to_log('sending init packet')
         packet = ParKingPacket.pack_init_packet(config.UNIQUE_ID, config.CAPACITY, spots_available)
         self.sock.sendall(packet)
+        self.write_to_log('init packet send')
 
     def send_goes_out_packet(self, z_value):
         packet = ParKingPacket.pack_out_packet(config.UNIQUE_ID, z_value)
