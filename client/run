@@ -7,7 +7,7 @@ from sys import exit
 
 # make sure that it is being used properly
 if len(argv) != 4:
-    print "usage: ./run <ip address> <service port> <spots available>"
+    print("usage: ./run <ip address> <service port> <spots available>")
     exit()
 
 # extract the script and service port from the args
@@ -22,5 +22,5 @@ except KeyboardInterrupt:
 
 parking_client.tear_down()
 
-print 'Have a great day :D'
+print('Have a great day :D')
 exit()
