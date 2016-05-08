@@ -58,20 +58,23 @@ class ParKingClient:
         self.sensor_1.setDeclination(0,6)
         self.write_to_log('sensor one created')
 
-        self.write_to_log('creating sensor 2')
-        self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(2)
-        self.sensor_2.setContinuousMode()
-        self.sensor_2.setDeclination(0,6)
-        self.write_to_log('sensor two created')
-        
+        if not config.ONE_SENSOR:
+            self.write_to_log('creating sensor 2')
+            self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(2)
+            self.sensor_2.setContinuousMode()
+            self.sensor_2.setDeclination(0,6)
+            self.write_to_log('sensor two created')
+
         sleep(2)
 
         (x, y, z) = self.read_from_sensor_1()
         self.z_base_line_1 = z
         self.last_z_signal_1 = 0
-        (x, y, z) = self.read_from_sensor_2()
-        self.z_base_line_2 = z
-        self.last_z_signal_2 = 0
+
+        if not config.ONE_SENSOR:
+            (x, y, z) = self.read_from_sensor_2()
+            self.z_base_line_2 = z
+            self.last_z_signal_2 = 0
 
     def create_logs(self):
         """
@@ -124,8 +127,9 @@ class ParKingClient:
 
     def run(self):
         self.running = True
-
-        if (config.SENSOR_CONFIG is config.ONE_LANE):
+        if config.ONE_SENSOR:
+            self.run_in_lane()
+        elif (config.SENSOR_CONFIG is config.ONE_LANE):
             self.run_one_lane()
         elif (config.SENSOR_CONFIG is config.TWO_LANE):
             goes_in_thread = Thread(target=self.run_in_lane, args=())
@@ -206,6 +210,7 @@ class ParKingClient:
                 self.goes_in_helper(z_val_1)
             elif z_val_2 > self.THRESHOLD:
                 self.goes_out_helper(z_val_2)
+
 
     def goes_in_helper(self, z_val_1):
         # TODO mik fix me
