@@ -33,9 +33,12 @@ You can test software?!
 
 ## Contributors
 
-Chen, Sherry
+Chen, Sherry 
+
 Gil, Sukhdeep
+
 Sial, Moe
+
 Stewart, Mikio
 
 ## License
