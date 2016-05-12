@@ -4,7 +4,9 @@ from time import time
 from datetime import datetime
 import sys
 from struct import unpack
-from ParKingPacket import ParKingPacket
+import ParKingPacket
+from ParkingLot import ParkingLot
+import sqlite3
 
 class ParKingServer:
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
@@ -27,6 +29,7 @@ class ParKingServer:
         else:
             self.log_file = None
         self.service_port = service_port
+        self.connection = sqlite3.connect('Parking.db')
         self.listening_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # allow socket to be reused for quick recalls
         self.listening_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -75,6 +78,9 @@ class ParKingServer:
         if self.listening_socket:
             self.write_to_log('closing listening socket')
             self.listening_socket.close()
+        if self.connection:
+            self.write_to_log('closing database connection')
+            self.connection.close()
         if self.log_file:
             self.write_to_log('closing log file')
             self.log_file.close()
@@ -141,26 +147,50 @@ class ParKingServer:
         :param client_addr:
         :return:
         """
+        data = client_socket.recv(4096)
+        packet = ParKingPacket.unpack_packet(data)
+
+        if packet[0] is not ParKingPacket.MESSAGE_TYPE_INIT:
+            self.write_to_log('Something is borken!!! Expeceted INIT got : ' . str(packet))
+            client_socket.close()
+            return
+
+        parking_lot = ParkingLot(packet[1], packet[2], packet[3])
+
         while self.running:
+
+            client_socket.settimeout(300)
+            # set the timeout on the socket so that if there is no activity for 5 mintues we assume that the lot has lost
+            # connectivity and cannot be reached
+            try:
+                data = client_socket.recv(4096)
+            except socket.timeout :
+                client_socket.close()
+                self.write_to_log('client died!!! WHAT THE WHAT?!')
+                return
+
             self.write_to_log('accepted something from client')
-            data = client_socket.recv(4096)
 
-            encoding = '!' + str(len(data)) +'s'
-            data = unpack(encoding, data)
+            t = threading.Thread(target=handle_packet, args=(data, parking_lot))
+            t.daemon = True
+            t.start()
 
-            self.handle_packet(data)
+def handle_packet(packet, parking_lot):
+    '''
 
-    def handle_packet(self, packet):
-        (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(packet)
-        print("**********************************************")
-        print("LOT ID : " + str(lot_id))
-        if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
-            print("ALIVE")
-        elif message_type is ParKingPacket.MESSAGE_TYPE_IN:
-            print("GOES INS")
-        elif message_type is ParKingPacket.MESSAGE_TYPE_OUT:
-            print("GOES OUTS")
-        elif message_type is ParKingPacket.MESSAGE_TYPE_INIT:
-            print("INIT")
-            print("CAP : " + str(capacity))
-            print("VAC : " + str(vacancies))
+    :param packet:
+    :param ParkingLot parking_lot:
+    :return:
+    '''
+    (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(packet)
+    print("**********************************************")
+    if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
+        return
+    elif message_type is ParKingPacket.MESSAGE_TYPE_IN:
+        parking_lot.goes_in()
+        print('GOES INS')
+    elif message_type is ParKingPacket.MESSAGE_TYPE_OUT:
+        parking_lot.goes_out()
+        print("GOES OUTS")
+    else:
+        print("Unrecognized message type : " . str(message_type))

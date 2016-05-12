@@ -12,6 +12,9 @@ import config
 import ParKingPacket
 from i2clibraries import i2c_hmc5883l
 
+# 16 is the GPIO pin
+
+
 class ParKingClient:
     START_CONNECTION = 1
     ALIVE = 2
