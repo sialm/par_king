@@ -13,6 +13,7 @@ $ git clone git@github.com:sialm/par_king.git
 ```
 server:
 ```bash
+$ ./par_king/server/data_migration
 $ ./par_king/server/run <port number>
 ```
 

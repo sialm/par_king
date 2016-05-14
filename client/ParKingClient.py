@@ -11,16 +11,14 @@ from threading import Thread
 import config
 import ParKingPacket
 from i2clibraries import i2c_hmc5883l
+from RPi import GPIO.setmode, GPIO.setup, GPIO.BCM, GPIO.output             # import RPi.GPIO module
+
 
 # 16 is the GPIO pin
 
 
 class ParKingClient:
-    START_CONNECTION = 1
-    ALIVE = 2
-    INCOMING = 3
-    OUTGOING = 4
-    SHUTTING_DOWN = 5
+    MUX_PIN = 23
 
     THRESHOLD = 4
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
@@ -55,6 +53,10 @@ class ParKingClient:
         alive_thread.daemon = True
         alive_thread.start()
 
+        GPIO.setmode(GPIO.BCM)             # choose BCM or BOARD
+        GPIO.setup(self.MUX_PIN, GPIO.OUT)           # set GPIO24 as an output
+        GPIO.output(self.MUX_PIN, 0)
+
         self.write_to_log('creating sensor 1')
         self.sensor_1 = i2c_hmc5883l.i2c_hmc5883l(1)
         self.sensor_1.setContinuousMode()
@@ -62,6 +64,7 @@ class ParKingClient:
         self.write_to_log('sensor one created')
 
         if not config.ONE_SENSOR:
+            GPIO.output(self.MUX_PIN, 1)
             self.write_to_log('creating sensor 2')
             self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(2)
             self.sensor_2.setContinuousMode()
@@ -117,10 +120,12 @@ class ParKingClient:
         self.write_to_log('socket opened!')
 
     def read_from_sensor_1(self):
+        GPIO.output(self.MUX_PIN, 0)
         vals = self.sensor_1.getAxes()
         return vals
 
     def read_from_sensor_2(self):
+        GPIO.output(self.MUX_PIN, 1)
         vals = self.sensor_2.getAxes()
         return vals
 
