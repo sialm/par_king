@@ -11,7 +11,7 @@ from threading import Thread
 import config
 import ParKingPacket
 from i2clibraries import i2c_hmc5883l
-from RPi import GPIO.setmode, GPIO.setup, GPIO.BCM, GPIO.output             # import RPi.GPIO module
+import RPi.GPIO as GPIO            # import RPi.GPIO module
 
 
 # 16 is the GPIO pin
