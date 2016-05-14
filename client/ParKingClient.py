@@ -99,6 +99,7 @@ class ParKingClient:
         Called upon exit, this should tear down the existing resources that are not managed by daemons
         :return:
         """
+        GPIO.cleanup()
         self.write_to_log('teardown started')
         if self.sock:
             self.write_to_log('closing listening socket')

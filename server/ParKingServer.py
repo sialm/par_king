@@ -163,7 +163,7 @@ class ParKingServer:
             # set the timeout on the socket so that if there is no activity for 5 mintues we assume that the lot has lost
             # connectivity and cannot be reached
             try:
-                data = client_socket.recv(4096)
+                (payload, address) = client_socket.recv(4096)
             except socket.timeout :
                 client_socket.close()
                 parking_lot.tear_down()
@@ -172,7 +172,7 @@ class ParKingServer:
 
             self.write_to_log('accepted something from client')
 
-            (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(packet)
+            (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(payload.get_bytes())
             print("**********************************************")
             if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
                 print('ITS ALIVE!!!')
