@@ -7,5 +7,6 @@ conn = sqlite3.connect('Parking.db')
 c = conn.cursor()
 # Create table
 c.execute('''CREATE TABLE traffic
-             (lot_id int, direction int, time string)''')
+             (lot_id INTEGER , direction INTEGER, time timestamp)''')
 
+conn.commit()

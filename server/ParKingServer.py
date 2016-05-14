@@ -166,31 +166,26 @@ class ParKingServer:
                 data = client_socket.recv(4096)
             except socket.timeout :
                 client_socket.close()
+                parking_lot.tear_down()
                 self.write_to_log('client died!!! WHAT THE WHAT?!')
                 return
 
             self.write_to_log('accepted something from client')
 
-            t = threading.Thread(target=handle_packet, args=(data, parking_lot))
-            t.daemon = True
-            t.start()
-
-def handle_packet(packet, parking_lot):
-    '''
-
-    :param packet:
-    :param ParkingLot parking_lot:
-    :return:
-    '''
-    (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(packet)
-    print("**********************************************")
-    if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
-        return
-    elif message_type is ParKingPacket.MESSAGE_TYPE_IN:
-        parking_lot.goes_in()
-        print('GOES INS')
-    elif message_type is ParKingPacket.MESSAGE_TYPE_OUT:
-        parking_lot.goes_out()
-        print("GOES OUTS")
-    else:
-        print("Unrecognized message type : " . str(message_type))
+            (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(packet)
+            print("**********************************************")
+            if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
+                print('ITS ALIVE!!!')
+                continue
+            elif message_type is ParKingPacket.MESSAGE_TYPE_IN:
+                t = threading.Thread(target=parking_lot.goes_in, args=())
+                t.daemon = True
+                t.start()
+                print('GOES INS')
+            elif message_type is ParKingPacket.MESSAGE_TYPE_OUT:
+                t = threading.Thread(target=parking_lot.goes_out, args=())
+                t.daemon = True
+                t.start()
+                print("GOES OUTS")
+            else:
+                print("Unrecognized message type : " . str(message_type))
