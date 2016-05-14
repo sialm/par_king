@@ -135,6 +135,7 @@ class ParKingClient:
 #######################################################################################################################
 
     def run(self):
+        self.write_to_log('Running')
         self.running = True
         if config.ONE_SENSOR:
             self.run_in_lane()
@@ -149,18 +150,20 @@ class ParKingClient:
             goes_out_thread.start()
 
     def run_in_lane(self):
+        self.write_to_log('run_in_lane.')
         for i in range(100):
             # calibrate sensor
             (x,y,z_1) = self.read_from_sensor_1()
             self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
             sleep(0.05)
-
+        self.write_to_log('in_lane calibration complete.')
         while self.running:
             sleep(0.05)
             (x,y,z_1) = self.read_from_sensor_1()
             z_val_1 = z_1 - self.z_base_line_1
             z_max_1 = z_val_1
 
+            self.write_to_log('z_max_1:' + str(z_max_1))
             while z_val_1 > self.THRESHOLD:
                 sleep(0.05)
                 (x,y,z_1) = self.read_from_sensor_1()

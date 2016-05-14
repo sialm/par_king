@@ -2,6 +2,7 @@ import socket
 import threading
 from time import time
 from datetime import datetime
+from struct import error
 import sys
 from struct import unpack
 import ParKingPacket
@@ -163,7 +164,8 @@ class ParKingServer:
             # set the timeout on the socket so that if there is no activity for 5 mintues we assume that the lot has lost
             # connectivity and cannot be reached
             try:
-                (payload, address) = client_socket.recv(4096)
+                data = client_socket.recv(4096)
+                print(str(data))
             except socket.timeout :
                 client_socket.close()
                 parking_lot.tear_down()
@@ -172,7 +174,11 @@ class ParKingServer:
 
             self.write_to_log('accepted something from client')
 
-            (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(payload.get_bytes())
+            try:
+                (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(data)
+            except error as e:
+                print('struct.error : ' + e.message)
+                print('unpacking packet : ' + data)
             print("**********************************************")
             if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
                 print('ITS ALIVE!!!')
