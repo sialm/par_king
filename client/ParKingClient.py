@@ -266,7 +266,8 @@ class ParKingClient:
     def get_time_stamp(self):
         return datetime.fromtimestamp(time()).strftime(self.TIME_FORMAT_STRING)
 
-    def write_to_log(self, string):
+    def write_to_log(self, message):
+        message = self.get_time_stamp() + message + '\n'
         if self.data_log_mode:
-            self.log_file.write(string)
+            self.log_file.write(message)
             self.log_file.flush()
