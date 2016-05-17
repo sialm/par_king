@@ -102,6 +102,9 @@ class ParKingClient:
         GPIO.cleanup()
         self.write_to_log('teardown started')
         if self.sock:
+            close_packet = ParKingPacket.pack_close_packet(config.UNIQUE_ID)
+            self.write_to_log('closing connection with server')
+            self.sock.sendall(close_packet)
             self.write_to_log('closing listening socket')
             self.sock.close()
         if self.log_file:

@@ -8,8 +8,9 @@ MESSAGE_TYPE_INIT = 1
 MESSAGE_TYPE_IN = 2
 MESSAGE_TYPE_OUT = 3
 MESSAGE_TYPE_ALIVE = 4
-MESSAGE_TYPE_RESPONSE = 5
-MESSAGE_TYPE_ERROR = 6
+MESSAGE_TYPE_CLOSE = 5
+MESSAGE_TYPE_RESPONSE = 6
+MESSAGE_TYPE_ERROR = 7
 
 
 def pack_init_packet(lot_id, capacity, vacancies):
@@ -53,6 +54,15 @@ def pack_alive_packet(lot_id):
     :return:
     """
     packet = pack(ENCODING, MESSAGE_TYPE_ALIVE, lot_id, PADDING, PADDING)
+    return packet
+
+def pack_close_packet(lot_id):
+    """
+    packs the close packet as defined by the par king protocol
+    :param int lot_id:
+    :return:
+    """
+    packet = pack(ENCODING, MESSAGE_TYPE_CLOSE, lot_id, PADDING, PADDING)
     return packet
 
 

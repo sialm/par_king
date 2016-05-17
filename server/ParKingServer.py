@@ -193,5 +193,8 @@ class ParKingServer:
                 t.daemon = True
                 t.start()
                 print("GOES OUTS")
+            elif message_type is ParKingPacket.MESSAGE_TYPE_CLOSE:
+                print('Closing connection')
+                return;
             else:
                 print("Unrecognized message type : " . str(message_type))

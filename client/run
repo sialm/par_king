@@ -19,6 +19,7 @@ try:
     parking_client = ParKingClient.ParKingClient(service_port, listening_ip, spots_available, True)
     parking_client.run()
 except KeyboardInterrupt:
+    parking_client.tear_down()
     parking_client.write_to_log('KeyboardInterrupt detected, shutting down.')
 
 parking_client.tear_down()
