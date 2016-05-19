@@ -63,13 +63,12 @@ class ParKingClient:
         self.sensor_1.setDeclination(0,6)
         self.write_to_log('sensor one created')
 
-        if not config.ONE_SENSOR:
-            GPIO.output(self.MUX_PIN, 1)
-            self.write_to_log('creating sensor 2')
-            self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(2)
-            self.sensor_2.setContinuousMode()
-            self.sensor_2.setDeclination(0,6)
-            self.write_to_log('sensor two created')
+        GPIO.output(self.MUX_PIN, 1)
+        self.write_to_log('creating sensor 2')
+        self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(0)
+        self.sensor_2.setContinuousMode()
+        self.sensor_2.setDeclination(0,6)
+        self.write_to_log('sensor two created')
 
         sleep(2)
 
@@ -88,7 +87,7 @@ class ParKingClient:
         :return: log file
         """
         try:
-            file_name = 'log_file_' + self.get_time_stamp()
+            file_name = 'log_file'
             log_file = open(file_name, 'w')
             return log_file
         except Exception as e:
