@@ -20,7 +20,7 @@ import RPi.GPIO as GPIO            # import RPi.GPIO module
 class ParKingClient:
     MUX_PIN = 23
 
-    THRESHOLD = 4
+    THRESHOLD = 20
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
 #######################################################################################################################
