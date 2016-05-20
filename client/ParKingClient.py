@@ -91,6 +91,7 @@ class ParKingClient:
             log_file = open(file_name, 'w')
             return log_file
         except Exception as e:
+            print('Log file error, shutting down.')
             self.tear_down()
 
     def tear_down(self):
@@ -116,9 +117,7 @@ class ParKingClient:
             self.write_to_log('opening socket')
             self.sock.connect((self.host_ip, self.service_port))
         except socket_error as e:
-            if self.sock:
-                self.sock.close()
-            print("what the what? all things are broken: " + e.message)
+            print('Could not create socket, tearing down.')
             self.tear_down()
         self.write_to_log('socket opened!')
 
