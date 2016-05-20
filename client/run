@@ -20,6 +20,8 @@ try:
     parking_client.run()
 except KeyboardInterrupt:
     parking_client.write_to_log('KeyboardInterrupt detected, shutting down.')
+except Exception as e:
+    print(e.message)
 
 parking_client.write_to_log('Tearing down from ./run, why?')
 parking_client.tear_down()
