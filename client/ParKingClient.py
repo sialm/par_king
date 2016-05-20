@@ -132,7 +132,7 @@ class ParKingClient:
         vals = self.sensor_2.getAxes()
         if (vals[2] is None):
             vals[2] = -4095
-        self.write_to_log('sensor 1 : ' + str(vals))
+        self.write_to_log('sensor 2 : ' + str(vals))
         return vals
 
 #######################################################################################################################
