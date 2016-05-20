@@ -183,12 +183,13 @@ class ParKingClient:
             self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
 
     def run_out_lane(self):
+        self.write_to_log('run_in_lane.')
         for i in range(100):
         # calibrate sensor
             (x,y,z_2) = self.read_from_sensor_2()
             self.z_base_line_2 = self.z_base_line_1*.95 + .05*z_2
             sleep(0.05)
-
+        self.write_to_log('in_lane calibration complete.')
         while self.running:
             sleep(0.05)
             (x,y,z_2) = self.read_from_sensor_2()
