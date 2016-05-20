@@ -18,6 +18,7 @@ spots_available = int(spots_available)
 try:
     parking_client = ParKingClient.ParKingClient(service_port, listening_ip, spots_available, True)
     parking_client.run()
+    parking_client.write_to_log('done')
 except KeyboardInterrupt:
     parking_client.write_to_log('KeyboardInterrupt detected, shutting down.')
 except Exception as e:
