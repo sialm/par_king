@@ -125,14 +125,12 @@ class ParKingClient:
         (x,y,z) = self.sensor_1.getAxes()
         if (z is None):
             z = -4095
-        self.write_to_log('sensor 1 z_val : ' + str(z))
         return (x,y,z)
 
     def read_from_sensor_2(self):
         (x,y,z) = self.sensor_2.getAxes()
         if (z is None):
             z = -4095
-        self.write_to_log('sensor 2 z_val : ' + str(z))
         return (x,y,z)
 
 #######################################################################################################################
