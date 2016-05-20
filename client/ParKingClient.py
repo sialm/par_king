@@ -122,18 +122,18 @@ class ParKingClient:
         self.write_to_log('socket opened!')
 
     def read_from_sensor_1(self):
-        vals = self.sensor_1.getAxes()
-        if (vals[2] is None):
-            vals[2] = -4095
-        self.write_to_log('sensor 1 : ' + str(vals))
-        return vals
+        (x,y,z) = self.sensor_1.getAxes()
+        if (z is None):
+            z = -4095
+        self.write_to_log('sensor 1 z_val : ' + str(z))
+        return (x,y,z)
 
     def read_from_sensor_2(self):
-        vals = self.sensor_2.getAxes()
-        if (vals[2] is None):
-            vals[2] = -4095
-        self.write_to_log('sensor 2 : ' + str(vals))
-        return vals
+        (x,y,z) = self.sensor_2.getAxes()
+        if (z is None):
+            z = -4095
+        self.write_to_log('sensor 2 z_val : ' + str(z))
+        return (x,y,z)
 
 #######################################################################################################################
 #                           RUN METHODS
