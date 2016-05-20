@@ -32,6 +32,7 @@ def pack_in_packet(lot_id, z_value):
     :param int|float  z_value:
     :return:
     """
+    z_value = int(z_value)
     packet = pack(ENCODING, MESSAGE_TYPE_IN, lot_id, z_value, PADDING)
     return packet
 
@@ -43,6 +44,7 @@ def pack_out_packet(lot_id, z_value):
     :param int|float z_value
     :return:
     """
+    z_value = int(z_value)
     packet = pack(ENCODING, MESSAGE_TYPE_OUT, lot_id, z_value, PADDING)
     return packet
 

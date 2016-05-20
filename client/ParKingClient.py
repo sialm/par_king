@@ -123,13 +123,17 @@ class ParKingClient:
         self.write_to_log('socket opened!')
 
     def read_from_sensor_1(self):
-        GPIO.output(self.MUX_PIN, 0)
         vals = self.sensor_1.getAxes()
+        if (vals[2] is None):
+            vals[2] = -4095
+        self.write_to_log('sensor 1 : ' + str(vals))
         return vals
 
     def read_from_sensor_2(self):
-        GPIO.output(self.MUX_PIN, 1)
         vals = self.sensor_2.getAxes()
+        if (vals[2] is None):
+            vals[2] = -4095
+        self.write_to_log('sensor 1 : ' + str(vals))
         return vals
 
 #######################################################################################################################
@@ -215,6 +219,8 @@ class ParKingClient:
             sleep(0.05)
             (x,y,z_1) = self.read_from_sensor_1()
             (x,y,z_2) = self.read_from_sensor_2()
+            print('z_1 : ' + str(type(z_1)))
+            print('val : ' + str(z_1))
             z_val_1 = z_1 - self.z_base_line_1
             z_val_2 = z_2 - self.z_base_line_2
             z_max_1 = z_val_1
