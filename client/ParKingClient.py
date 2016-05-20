@@ -159,16 +159,12 @@ class ParKingClient:
             sleep(0.05)
         self.write_to_log('in_lane calibration complete.')
         while self.running:
-            self.write_to_log('in lane : nothing doing')
             sleep(0.05)
             (x,y,z_1) = self.read_from_sensor_1()
             z_val_1 = z_1 - self.z_base_line_1
             z_max_1 = z_val_1
 
-            self.write_to_log('z_max_1:' + str(z_max_1))
             while z_val_1 > self.THRESHOLD:
-                self.write_to_log('in lane : threshold passed')
-
                 sleep(0.05)
                 (x,y,z_1) = self.read_from_sensor_1()
                 z_val_1 = z_1 - self.z_base_line_1
@@ -192,16 +188,12 @@ class ParKingClient:
             sleep(0.05)
         self.write_to_log('out_lane calibration complete.')
         while self.running:
-            self.write_to_log('out lane: nothing doing')
-
             sleep(0.05)
             (x,y,z_2) = self.read_from_sensor_2()
             z_val_2 = z_2 - self.z_base_line_2
             z_max_2 = z_val_2
 
             while z_val_2 > self.THRESHOLD:
-                self.write_to_log('out lane: threshold passed')
-
                 sleep(0.05)
                 (x,y,z_2) = self.read_from_sensor_2()
                 z_val_2 = z_2 - self.z_base_line_2
