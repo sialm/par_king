@@ -163,6 +163,7 @@ class ParKingClient:
             sleep(0.05)
         self.write_to_log('in_lane calibration complete.')
         while self.running:
+            self.write_to_log('in lane : nothing doing')
             sleep(0.05)
             (x,y,z_1) = self.read_from_sensor_1()
             z_val_1 = z_1 - self.z_base_line_1
@@ -170,12 +171,16 @@ class ParKingClient:
 
             self.write_to_log('z_max_1:' + str(z_max_1))
             while z_val_1 > self.THRESHOLD:
+                self.write_to_log('in lane : threshold passed')
+
                 sleep(0.05)
                 (x,y,z_1) = self.read_from_sensor_1()
                 z_val_1 = z_1 - self.z_base_line_1
                 z_max_1 = max(z_val_1, z_max_1)
 
                 if z_val_1 < self.THRESHOLD:
+                    self.write_to_log('in lane : sending goes outs packet')
+
                     t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
                     t.daemon = True
                     t.start()
@@ -191,18 +196,23 @@ class ParKingClient:
             sleep(0.05)
         self.write_to_log('out_lane calibration complete.')
         while self.running:
+            self.write_to_log('out lane: nothing doing')
+
             sleep(0.05)
             (x,y,z_2) = self.read_from_sensor_2()
             z_val_2 = z_2 - self.z_base_line_2
             z_max_2 = z_val_2
 
             while z_val_2 > self.THRESHOLD:
+                self.write_to_log('out lane: threshold passed')
+
                 sleep(0.05)
                 (x,y,z_2) = self.read_from_sensor_2()
                 z_val_2 = z_2 - self.z_base_line_2
                 z_max_2 = max(z_val_2, z_max_2)
 
                 if z_val_2 < self.THRESHOLD:
+                    self.write_to_log('out lane: sending goes outs packet')
                     t = Thread(target=self.send_goes_out_packet, args=(z_max_2, ))
                     t.daemon = True
                     t.start()
