@@ -150,9 +150,7 @@ class ParKingClient:
             goes_in_thread = Thread(target=self.run_in_lane, args=())
             goes_in_thread.daemon = True
             goes_in_thread.start()
-            goes_out_thread = Thread(target=self.run_out_lane, args=())
-            goes_out_thread.daemon = True
-            goes_out_thread.start()
+            self.run_out_lane()
 
     def run_in_lane(self):
         self.write_to_log('run_in_lane.')
