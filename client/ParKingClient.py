@@ -171,8 +171,7 @@ class ParKingClient:
                 z_max_1 = max(z_val_1, z_max_1)
 
                 if z_val_1 < self.THRESHOLD:
-                    self.write_to_log('in lane : sending goes outs packet')
-
+                    self.write_to_log('in lane : sending goes ins packet')
                     t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
                     t.daemon = True
                     t.start()
