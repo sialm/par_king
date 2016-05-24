@@ -18,8 +18,6 @@ import RPi.GPIO as GPIO            # import RPi.GPIO module
 
 
 class ParKingClient:
-    MUX_PIN = 23
-
     THRESHOLD = 20
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
@@ -53,17 +51,13 @@ class ParKingClient:
         alive_thread.daemon = True
         alive_thread.start()
 
-        GPIO.setmode(GPIO.BCM)             # choose BCM or BOARD
-        GPIO.setup(self.MUX_PIN, GPIO.OUT)           # set GPIO24 as an output
-        GPIO.output(self.MUX_PIN, 0)
-
+        GPIO.setmode(GPIO.BCM)
         self.write_to_log('creating sensor 1')
         self.sensor_1 = i2c_hmc5883l.i2c_hmc5883l(1)
         self.sensor_1.setContinuousMode()
         self.sensor_1.setDeclination(0,6)
         self.write_to_log('sensor one created')
 
-        GPIO.output(self.MUX_PIN, 1)
         self.write_to_log('creating sensor 2')
         self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(0)
         self.sensor_2.setContinuousMode()
