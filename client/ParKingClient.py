@@ -13,10 +13,6 @@ import ParKingPacket
 from i2clibraries import i2c_hmc5883l
 import RPi.GPIO as GPIO            # import RPi.GPIO module
 
-
-# 16 is the GPIO pin
-
-
 class ParKingClient:
     THRESHOLD = 20
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
@@ -177,7 +173,7 @@ class ParKingClient:
         for i in range(100):
         # calibrate sensor
             (x,y,z_2) = self.read_from_sensor_2()
-            self.z_base_line_2 = self.z_base_line_1*.95 + .05*z_2
+            self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
             sleep(0.05)
         self.write_to_log('out_lane calibration complete.')
         while self.running:

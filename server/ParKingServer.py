@@ -4,7 +4,6 @@ from time import time
 from datetime import datetime
 from struct import error
 import sys
-from struct import unpack
 import ParKingPacket
 from ParkingLot import ParkingLot
 import sqlite3
@@ -165,7 +164,7 @@ class ParKingServer:
             # connectivity and cannot be reached
             try:
                 data = client_socket.recv(4096)
-                print(str(data))
+                # print(str(data))
             except socket.timeout :
                 client_socket.close()
                 parking_lot.tear_down()
@@ -173,12 +172,16 @@ class ParKingServer:
                 return
 
             self.write_to_log('accepted something from client')
+            if len(data) is 0:
+                print('Closing client socket D:')
+                client_socket.close
+                return
 
             try:
                 (message_type, lot_id, capacity, vacancies) = ParKingPacket.unpack_packet(data)
-            except error as e:
-                print('struct.error : ' + e.message)
-                print('unpacking packet : ' + data)
+            except error:
+                print('struct.error')
+                print('unpacking packet : ' + str(data))
             print("**********************************************")
             if message_type is ParKingPacket.MESSAGE_TYPE_ALIVE:
                 print('ITS ALIVE!!!')
