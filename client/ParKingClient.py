@@ -14,7 +14,7 @@ from i2clibraries import i2c_hmc5883l
 import RPi.GPIO as GPIO            # import RPi.GPIO module
 
 class ParKingClient:
-    THRESHOLD = 20
+    THRESHOLD = 125
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
 #######################################################################################################################
@@ -85,7 +85,7 @@ class ParKingClient:
             self.tear_down()
 
     def tear_down(self):
-        """
+        """l
         Called upon exit, this should tear down the existing resources that are not managed by daemons
         :return:
         """
@@ -115,12 +115,15 @@ class ParKingClient:
         (x,y,z) = self.sensor_1.getAxes()
         if (z is None):
             z = -4095
+        z = z + 4096    
         return (x,y,z)
 
     def read_from_sensor_2(self):
+        return (1,1,1)
         (x,y,z) = self.sensor_2.getAxes()
         if (z is None):
             z = -4095
+        z = z + 4096    
         return (x,y,z)
 
 #######################################################################################################################
@@ -149,16 +152,18 @@ class ParKingClient:
             sleep(0.05)
         self.write_to_log('in_lane calibration complete.')
         while self.running:
-            sleep(0.05)
+            sleep(.5)
             (x,y,z_1) = self.read_from_sensor_1()
-            z_val_1 = z_1 - self.z_base_line_1
+            z_val_1 = abs(z_1 - self.z_base_line_1)
             z_max_1 = z_val_1
+            self.write_to_log('z : ' + str(z_val_1))
 
             while z_val_1 > self.THRESHOLD:
-                sleep(0.05)
+                sleep(0.5)
                 (x,y,z_1) = self.read_from_sensor_1()
-                z_val_1 = z_1 - self.z_base_line_1
+                z_val_1 = abs(z_1 - self.z_base_line_1)
                 z_max_1 = max(z_val_1, z_max_1)
+                self.write_to_log('z ++++ : ' + str(z_val_1))
 
                 if z_val_1 < self.THRESHOLD:
                     self.write_to_log('in lane : sending goes ins packet')
@@ -177,7 +182,7 @@ class ParKingClient:
             sleep(0.05)
         self.write_to_log('out_lane calibration complete.')
         while self.running:
-            sleep(0.05)
+            sleep(0.5)
             (x,y,z_2) = self.read_from_sensor_2()
             z_val_2 = z_2 - self.z_base_line_2
             z_max_2 = z_val_2
@@ -229,6 +234,7 @@ class ParKingClient:
 
     def keep_alive(self):
         while True:
+
             self.send_alive_packet()
             sleep(config.ALIVE_SLEEP)
 
