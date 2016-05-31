@@ -159,13 +159,8 @@ class ParKingClient:
             z_max_1 = z_val_1
             self.write_to_log('z : ' + str(z_val_1))
 
-            while z_val_1 > self.THRESHOLD:
+            if z_val_1 > self.THRESHOLD:
                 tripped = True
-                sleep(0.5)
-                (x,y,z_1) = self.read_from_sensor_1()
-                z_val_1 = abs(z_1 - self.z_base_line_1)
-                z_max_1 = max(z_val_1, z_max_1)
-                self.write_to_log('z ++++ : ' + str(z_val_1))
 
             if z_val_1 < self.LOWER_THRESHOLD:
                 if tripped:
@@ -174,8 +169,8 @@ class ParKingClient:
                     t.daemon = True
                     t.start()
                     tripped = False
-
-            self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
+                else:
+                    self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
 
     def run_out_lane(self):
         self.write_to_log('run_out_lane.')
