@@ -7,6 +7,8 @@ from time import sleep
 from time import time
 from os import getpid
 from os import remove
+from struct import pack
+from random import randint
 import ParKingPacket
 import config
 from datetime import datetime
@@ -16,7 +18,7 @@ import RPi.GPIO as GPIO            # import RPi.GPIO module
 import subprocess
 
 class CameraClient:
-    THRESHOLD = 20
+    THRESHOLD = 10
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
 #######################################################################################################################
@@ -27,7 +29,8 @@ class CameraClient:
         '''
         This will create a ParKingClient
         :param service_port:
-        :param host_ip:
+        :param host
+        :ip:
         :param data_log_mode:
         :return:
         '''
@@ -41,16 +44,9 @@ class CameraClient:
         self.running = False
 
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.connect()
-        self.send_init_packet(spots_available)
-
-
-        alive_thread = Thread(target=self.keep_alive, args=())
-        alive_thread.daemon = True
-        alive_thread.start()
 
         GPIO.setwarnings(False)
-        GPIO.setmode(GPIO.BCM)
+        GPIO.setmode(GPIO.BOARD)
         self.write_to_log('creating sensor 1')
         self.sensor_1 = i2c_hmc5883l.i2c_hmc5883l(1)
         self.sensor_1.setContinuousMode()
@@ -154,9 +150,10 @@ class CameraClient:
             sleep(config.ALIVE_SLEEP)
 
     def capture_and_send_image(self):
-        unique_file_name = str(getpid())
-        self.log_file('Capturing image to file ' + unique_file_name)
+        unique_file_name = str(randint)
+        #self.log_file('Capturing image to file ' + unique_file_name)
         subprocess.Popen(['raspistill', '-o', unique_file_name, '-t', '500'])
+        sleep(6)
         self.send_file(unique_file_name)
         self.log_file('removing image ' + unique_file_name)
         remove(unique_file_name)
@@ -175,9 +172,10 @@ class CameraClient:
             print('Could not create image socket, tearing down.')
             self.tear_down()
         self.write_to_log('image socket opened!')
-        image_socket.sendall(config.UNIQUE_ID)
-        f = open(file_name,'rb')
-        self.write_to_log('opened image : ' + file_name)
+        uid = pack('!I', config.UNIQUE_ID)
+        image_socket.sendall(uid)
+        f = open(file_name,'r')
+        #self.write_to_log('opened image : ' + file_name)
         l = f.read(1024)
         while (l):
             self.write_to_log('sending image : ' + file_name)
