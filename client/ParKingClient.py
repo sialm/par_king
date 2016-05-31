@@ -262,7 +262,7 @@ class ParKingClient:
 
     def write_to_data_file(self, value):
         if self.data_log_mode:
-            message = str(self.index_for_csv) + ',' + value
-            self.log_file.write(message)
-            self.log_file.flush()
+            message = str(self.index_for_csv) + ',' + value + '\n'
+            self.data_file.write(message)
+            self.data_file.flush()
             self.index_for_csv = self.index_for_csv + 1
