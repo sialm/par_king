@@ -5,17 +5,18 @@ from socket import SOCK_STREAM
 from socket import error as socket_error
 from time import sleep
 from time import time
-from struct import pack
+from os import getpid
+from os import remove
+import ParKingPacket
+import config
 from datetime import datetime
 from threading import Thread
-import config
-import ParKingPacket
 from i2clibraries import i2c_hmc5883l
 import RPi.GPIO as GPIO            # import RPi.GPIO module
+import subprocess
 
-class ParKingClient:
-    THRESHOLD = 125
-    LOWER_THRESHOLD = 10
+class CameraClient:
+    THRESHOLD = 20
     TIME_FORMAT_STRING = '%Y-%m-%d %H:%M:%S'
 
 #######################################################################################################################
@@ -48,6 +49,7 @@ class ParKingClient:
         alive_thread.daemon = True
         alive_thread.start()
 
+        GPIO.setwarnings(False)
         GPIO.setmode(GPIO.BCM)
         self.write_to_log('creating sensor 1')
         self.sensor_1 = i2c_hmc5883l.i2c_hmc5883l(1)
@@ -55,22 +57,12 @@ class ParKingClient:
         self.sensor_1.setDeclination(0,6)
         self.write_to_log('sensor one created')
 
-        self.write_to_log('creating sensor 2')
-        self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(0)
-        self.sensor_2.setContinuousMode()
-        self.sensor_2.setDeclination(0,6)
-        self.write_to_log('sensor two created')
-
         sleep(2)
 
         (x, y, z) = self.read_from_sensor_1()
         self.z_base_line_1 = z
         self.last_z_signal_1 = 0
 
-        if not config.ONE_SENSOR:
-            (x, y, z) = self.read_from_sensor_2()
-            self.z_base_line_2 = z
-            self.last_z_signal_2 = 0
 
     def create_logs(self):
         """
@@ -86,7 +78,7 @@ class ParKingClient:
             self.tear_down()
 
     def tear_down(self):
-        """l
+        """
         Called upon exit, this should tear down the existing resources that are not managed by daemons
         :return:
         """
@@ -102,7 +94,6 @@ class ParKingClient:
             self.write_to_log('closing log file')
             self.log_file.close()
 
-
     def connect(self):
         try:
             self.write_to_log('opening socket')
@@ -116,15 +107,7 @@ class ParKingClient:
         (x,y,z) = self.sensor_1.getAxes()
         if (z is None):
             z = -4095
-        z = z + 4096    
-        return (x,y,z)
-
-    def read_from_sensor_2(self):
-        return (1,1,1)
-        (x,y,z) = self.sensor_2.getAxes()
-        if (z is None):
-            z = -4095
-        z = z + 4096    
+        z = z + 4096
         return (x,y,z)
 
 #######################################################################################################################
@@ -134,18 +117,7 @@ class ParKingClient:
     def run(self):
         self.write_to_log('Running')
         self.running = True
-        if config.ONE_SENSOR:
-            self.run_in_lane()
-        elif (config.SENSOR_CONFIG is config.ONE_LANE):
-            self.run_one_lane()
-        elif (config.SENSOR_CONFIG is config.TWO_LANE):
-            goes_in_thread = Thread(target=self.run_in_lane, args=())
-            goes_in_thread.daemon = True
-            goes_in_thread.start()
-            self.run_out_lane()
-
-    def run_in_lane(self):
-        self.write_to_log('run_in_lane.')
+        self.write_to_log('Beginning sensor calibration')
         for i in range(100):
             # calibrate sensor
             (x,y,z_1) = self.read_from_sensor_1()
@@ -166,96 +138,60 @@ class ParKingClient:
                 z_max_1 = max(z_val_1, z_max_1)
                 self.write_to_log('z ++++ : ' + str(z_val_1))
 
-                if z_val_1 < self.LOWER_THRESHOLD:
-                    self.write_to_log('in lane : sending goes ins packet')
-                    t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
+                if z_val_1 < self.THRESHOLD:
+                    self.write_to_log('car detected')
+                    self.write_to_log('z_max : ' + str(z_max_1))
+                    t = Thread(target=self.capture_and_send_image, args=())
                     t.daemon = True
                     t.start()
 
             self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
 
-    def run_out_lane(self):
-        self.write_to_log('run_out_lane.')
-        for i in range(100):
-        # calibrate sensor
-            (x,y,z_2) = self.read_from_sensor_2()
-            self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
-            sleep(0.05)
-        self.write_to_log('out_lane calibration complete.')
-        while self.running:
-            sleep(0.5)
-            (x,y,z_2) = self.read_from_sensor_2()
-            z_val_2 = z_2 - self.z_base_line_2
-            z_max_2 = z_val_2
-
-            while z_val_2 > self.THRESHOLD:
-                sleep(0.05)
-                (x,y,z_2) = self.read_from_sensor_2()
-                z_val_2 = z_2 - self.z_base_line_2
-                z_max_2 = max(z_val_2, z_max_2)
-
-                if z_val_2 < self.THRESHOLD:
-                    self.write_to_log('out lane: sending goes outs packet')
-                    t = Thread(target=self.send_goes_out_packet, args=(z_max_2, ))
-                    t.daemon = True
-                    t.start()
-
-            self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
-
-    def run_one_lane(self):
-        (x,y,z_1) = self.read_from_sensor_1()
-        (x,y,z_2) = self.read_from_sensor_2()
-        self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
-        self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
-        sleep(0.05)
-        while self.running:
-            sleep(0.05)
-            (x,y,z_1) = self.read_from_sensor_1()
-            (x,y,z_2) = self.read_from_sensor_2()
-            print('z_1 : ' + str(type(z_1)))
-            print('val : ' + str(z_1))
-            z_val_1 = z_1 - self.z_base_line_1
-            z_val_2 = z_2 - self.z_base_line_2
-            z_max_1 = z_val_1
-            z_max_2 = z_val_2
-
-            if z_val_1 > self.THRESHOLD:
-                self.goes_in_helper(z_val_1)
-            elif z_val_2 > self.THRESHOLD:
-                self.goes_out_helper(z_val_2)
-
-
-    def goes_in_helper(self, z_val_1):
-        # TODO mik fix me
-        self.send_goes_in_packet(z_val_1)
-
-    def goes_out_helper(self, z_val_2):
-        # TODO mik fix me
-        self.send_goes_out_packet(z_val_2)
 
     def keep_alive(self):
         while True:
-
             self.send_alive_packet()
             sleep(config.ALIVE_SLEEP)
+
+    def capture_and_send_image(self):
+        unique_file_name = str(getpid())
+        self.log_file('Capturing image to file ' + unique_file_name)
+        subprocess.Popen(['raspistill', '-o', unique_file_name, '-t', '500'])
+        self.send_file(unique_file_name)
+        self.log_file('removing image ' + unique_file_name)
+        remove(unique_file_name)
+
 
 #######################################################################################################################
 #                           NETWORK METHODS
 #######################################################################################################################
+
+    def send_file(self, file_name):
+        try:
+            self.write_to_log('opening image socket')
+            image_socket = socket(AF_INET, SOCK_STREAM)
+            image_socket.connect((self.host_ip, self.service_port))
+        except socket_error as e:
+            print('Could not create image socket, tearing down.')
+            self.tear_down()
+        self.write_to_log('image socket opened!')
+        image_socket.sendall(config.UNIQUE_ID)
+        f = open(file_name,'rb')
+        self.write_to_log('opened image : ' + file_name)
+        l = f.read(1024)
+        while (l):
+            self.write_to_log('sending image : ' + file_name)
+            image_socket.send(l)
+            l = f.read(1024)
+        self.write_to_log('sent image ' + file_name)
+        f.close()
+        image_socket.close()
 
     def send_init_packet(self, spots_available):
         self.write_to_log('sending init packet')
         packet = ParKingPacket.pack_init_packet(config.UNIQUE_ID, config.CAPACITY, spots_available)
         self.sock.sendall(packet)
         self.write_to_log('init packet send')
-
-    def send_goes_out_packet(self, z_value):
-        packet = ParKingPacket.pack_out_packet(config.UNIQUE_ID, z_value)
-        self.sock.sendall(packet)
-
-    def send_goes_in_packet(self, z_value):
-        packet = ParKingPacket.pack_in_packet(config.UNIQUE_ID, z_value)
-        self.sock.sendall(packet)
 
     def send_alive_packet(self):
         packet = ParKingPacket.pack_alive_packet(config.UNIQUE_ID)

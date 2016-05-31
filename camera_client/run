@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+import CameraClient
+from sys import argv
+from sys import exit
+
+
+# make sure that it is being used properly
+if len(argv) != 4:
+    print("usage: ./run <ip address> <service port> <spots available>")
+    exit()
+
+# extract the script and service port from the args
+script, listening_ip, service_port, spots_available = argv
+service_port = int(service_port)
+spots_available = int(spots_available)
+
+try:
+    camera_client = CameraClient.CameraClient(service_port, listening_ip, spots_available, True)
+    camera_client.run()
+    camera_client.write_to_log('done')
+except KeyboardInterrupt:
+    camera_client.write_to_log('KeyboardInterrupt detected, shutting down.')
+
+camera_client.write_to_log('Tearing down from ./run')
+camera_client.tear_down()
+
+print('Have a great day :D')
+exit()
