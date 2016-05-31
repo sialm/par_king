@@ -33,8 +33,11 @@ class ParKingClient:
         self.data_log_mode = data_log_mode
         if self.data_log_mode:
             self.log_file = self.create_logs()
+            self.data_file = self.create_data_file()
         else:
             self.log_file = None
+            self.data_file = None
+        self.index_for_csv = 1
         self.host_ip = host_ip
         self.service_port = service_port
         self.running = False
@@ -86,6 +89,19 @@ class ParKingClient:
             print('Log file error, shutting down.')
             self.tear_down()
 
+    def create_data_file(self):
+        """
+        Creates a unique log file per session
+        :return: log file
+        """
+        try:
+            file_name = 'data.csv'
+            data_file = open(file_name, 'w')
+            return data_file
+        except Exception as e:
+            print('data file error, shutting down.')
+            self.tear_down()
+
     def tear_down(self):
         """l
         Called upon exit, this should tear down the existing resources that are not managed by daemons
@@ -99,6 +115,9 @@ class ParKingClient:
             self.sock.sendall(close_packet)
             self.write_to_log('closing listening socket')
             self.sock.close()
+        if self.data_file:
+            self.write_to_log('closing data file')
+            self.data_file.close()
         if self.log_file:
             self.write_to_log('closing log file')
             self.log_file.close()
@@ -158,6 +177,7 @@ class ParKingClient:
             z_val_1 = abs(z_1 - self.z_base_line_1)
             z_max_1 = z_val_1
             self.write_to_log('z : ' + str(z_val_1))
+            self.write_to_data_file(str(z_val_1))
 
             if z_val_1 > self.THRESHOLD:
                 tripped = True
@@ -239,3 +259,10 @@ class ParKingClient:
         if self.data_log_mode:
             self.log_file.write(message)
             self.log_file.flush()
+
+    def write_to_data_file(self, value):
+        if self.data_log_mode:
+            message = str(self.index_for_csv) + ',' + value
+            self.log_file.write(message)
+            self.log_file.flush()
+            self.index_for_csv = self.index_for_csv + 1
