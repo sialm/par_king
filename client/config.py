@@ -13,7 +13,7 @@ TESTING = 'TESTING'
 LIVE = 'LIVE'
 ENVIRONMENT = LIVE
 ALIVE_SLEEP = 60
-ONE_SENSOR = False
+ONE_SENSOR = True
 
 
 #######################################################################################################################
