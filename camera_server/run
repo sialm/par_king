@@ -13,7 +13,7 @@ script, service_port = sys.argv
 service_port = int(service_port)
 
 try:
-    camera_server = CameraServer.CameraServer(service_port, False)
+    camera_server = CameraServer.CameraServer(service_port, True)
     camera_server.start_listening()
 except KeyboardInterrupt:
     camera_server.write_to_log('KeyboardInterrupt detected, shutting down.')

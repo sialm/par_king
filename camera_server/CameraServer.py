@@ -4,6 +4,9 @@ from time import time
 from time import sleep
 from datetime import datetime
 import sys
+from os import getpid
+from struct import unpack
+from os import getcwd
 import openalpr_api
 import OpenALPR
 from ParkingLot import ParkingLot
@@ -71,7 +74,7 @@ class CameraServer:
         :return: log file
         """
         try:
-            file_name = 'log_file_' + self.get_timestamp_string()
+            file_name = 'log_file'
             log_file = open(file_name, 'w')
             return log_file
         except Exception as e:
@@ -155,10 +158,20 @@ class CameraServer:
         :param client_addr:
         :return:
         """
-        lot_id = client_socket.recv(1024)
+        lot_id = client_socket.recv(4)
+        lot_id = unpack('!I', lot_id)
         apiclient = openalpr_api.DefaultApi()
 
-        response = apiclient.recognize_post(OpenALPR.SECRET_KEY, "plate,color,make,makemodel", image="/storage/projects/alpr/samples/testing/car1.jpg", country="us")
+        file_name = str(getpid())
+        img_file = open(file_name, 'wr+')
+        payload = client_socket.recv(1024)
+        while (payload):
+            print "Receiving..."
+            img_file.write(payload)
+            payload = client_socket.recv(1024)
+        img_file.close()
+
+        response = apiclient.recognize_post('sk_6cb172cdd75b54826a2089b0', "plate,color,make,makemodel", 'Users/mohammadsial/Desktop/test', country="us")
         plate = response.plate.results[0].plate
         confidence = response.plate.results[0].confidence
 
@@ -178,6 +191,7 @@ class CameraServer:
         :param plate_number:
         :return:
         """
+        return
         entry = "(INSERT INTO traffic VALUES (" + str(lot_id) + ", '" + plate_number + "', '" + self.get_timestamp_string() +"'))"
         self.db_queue.put(entry)
 
