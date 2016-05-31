@@ -55,11 +55,12 @@ class ParKingClient:
         self.sensor_1.setDeclination(0,6)
         self.write_to_log('sensor one created')
 
-        self.write_to_log('creating sensor 2')
-        self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(0)
-        self.sensor_2.setContinuousMode()
-        self.sensor_2.setDeclination(0,6)
-        self.write_to_log('sensor two created')
+        if not config.ONE_SENSOR:
+            self.write_to_log('creating sensor 2')
+            self.sensor_2 = i2c_hmc5883l.i2c_hmc5883l(0)
+            self.sensor_2.setContinuousMode()
+            self.sensor_2.setDeclination(0,6)
+            self.write_to_log('sensor two created')
 
         sleep(2)
 
