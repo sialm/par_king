@@ -137,8 +137,6 @@ class ParKingClient:
         self.running = True
         if config.ONE_SENSOR:
             self.run_in_lane()
-        elif (config.SENSOR_CONFIG is config.ONE_LANE):
-            self.run_one_lane()
         elif (config.SENSOR_CONFIG is config.TWO_LANE):
             goes_in_thread = Thread(target=self.run_in_lane, args=())
             goes_in_thread.daemon = True
@@ -147,6 +145,7 @@ class ParKingClient:
 
     def run_in_lane(self):
         self.write_to_log('run_in_lane.')
+        tripped = False
         for i in range(100):
             # calibrate sensor
             (x,y,z_1) = self.read_from_sensor_1()
@@ -161,17 +160,20 @@ class ParKingClient:
             self.write_to_log('z : ' + str(z_val_1))
 
             while z_val_1 > self.THRESHOLD:
+                tripped = True
                 sleep(0.5)
                 (x,y,z_1) = self.read_from_sensor_1()
                 z_val_1 = abs(z_1 - self.z_base_line_1)
                 z_max_1 = max(z_val_1, z_max_1)
                 self.write_to_log('z ++++ : ' + str(z_val_1))
 
-                if z_val_1 < self.LOWER_THRESHOLD:
-                    self.write_to_log('in lane : sending goes ins packet')
-                    t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
-                    t.daemon = True
-                    t.start()
+        if z_val_1 < self.LOWER_THRESHOLD:
+            if tripped:
+                self.write_to_log('in lane : sending goes ins packet')
+                t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
+                t.daemon = True
+                t.start()
+                tripped = False
 
             self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
 
@@ -203,40 +205,8 @@ class ParKingClient:
 
             self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
 
-    def run_one_lane(self):
-        (x,y,z_1) = self.read_from_sensor_1()
-        (x,y,z_2) = self.read_from_sensor_2()
-        self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
-        self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
-        sleep(0.05)
-        while self.running:
-            sleep(0.05)
-            (x,y,z_1) = self.read_from_sensor_1()
-            (x,y,z_2) = self.read_from_sensor_2()
-            print('z_1 : ' + str(type(z_1)))
-            print('val : ' + str(z_1))
-            z_val_1 = z_1 - self.z_base_line_1
-            z_val_2 = z_2 - self.z_base_line_2
-            z_max_1 = z_val_1
-            z_max_2 = z_val_2
-
-            if z_val_1 > self.THRESHOLD:
-                self.goes_in_helper(z_val_1)
-            elif z_val_2 > self.THRESHOLD:
-                self.goes_out_helper(z_val_2)
-
-
-    def goes_in_helper(self, z_val_1):
-        # TODO mik fix me
-        self.send_goes_in_packet(z_val_1)
-
-    def goes_out_helper(self, z_val_2):
-        # TODO mik fix me
-        self.send_goes_out_packet(z_val_2)
-
     def keep_alive(self):
         while True:
-
             self.send_alive_packet()
             sleep(config.ALIVE_SLEEP)
 
