@@ -167,13 +167,13 @@ class ParKingClient:
                 z_max_1 = max(z_val_1, z_max_1)
                 self.write_to_log('z ++++ : ' + str(z_val_1))
 
-        if z_val_1 < self.LOWER_THRESHOLD:
-            if tripped:
-                self.write_to_log('in lane : sending goes ins packet')
-                t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
-                t.daemon = True
-                t.start()
-                tripped = False
+            if z_val_1 < self.LOWER_THRESHOLD:
+                if tripped:
+                    self.write_to_log('in lane : sending goes ins packet')
+                    t = Thread(target=self.send_goes_in_packet, args=(z_max_1, ))
+                    t.daemon = True
+                    t.start()
+                    tripped = False
 
             self.z_base_line_1 = self.z_base_line_1*.95 + .05*z_1
 
