@@ -124,6 +124,10 @@ class ParKingClient:
 
 
     def connect(self):
+        """
+        This connects to the server. In the event that it fails to connect it will tear down the ParKingClient
+        :return:
+        """
         try:
             self.write_to_log('opening socket')
             self.sock.connect((self.host_ip, self.service_port))
@@ -133,6 +137,12 @@ class ParKingClient:
         self.write_to_log('socket opened!')
 
     def read_from_sensor_1(self):
+        """
+        This will pull the value from the sensor. If the sensor is at it's max negative value, it will return None
+        to avoid this we move it to one plus the max negative value. We then shift it everything up so we don't have to
+        worry about artifacts while crossing zero.
+        :return:
+        """
         (x,y,z) = self.sensor_1.getAxes()
         if (z is None):
             z = -4095
@@ -140,6 +150,12 @@ class ParKingClient:
         return (x,y,z)
 
     def read_from_sensor_2(self):
+        """
+        This will pull the value from the sensor. If the sensor is at it's max negative value, it will return None
+        to avoid this we move it to one plus the max negative value. We then shift it everything up so we don't have to
+        worry about artifacts while crossing zero.
+        :return:
+        """
         return (1,1,1)
         (x,y,z) = self.sensor_2.getAxes()
         if (z is None):
@@ -163,6 +179,10 @@ class ParKingClient:
             self.run_out_lane()
 
     def run_in_lane(self):
+        """
+        Monitor traffic on one lane.
+        :return:
+        """
         self.write_to_log('run_in_lane.')
         tripped = False
         for i in range(100):
@@ -221,6 +241,10 @@ class ParKingClient:
             self.z_base_line_2 = self.z_base_line_2*.95 + .05*z_2
 
     def keep_alive(self):
+        """
+        This should run in a seperate thread and will handle the keep_alive message cadence to the server
+        :return:
+        """
         while True:
             self.send_alive_packet()
             sleep(config.ALIVE_SLEEP)
@@ -230,20 +254,39 @@ class ParKingClient:
 #######################################################################################################################
 
     def send_init_packet(self, spots_available):
+        """
+        This should be called once upon creation and will identify the sensor to the server.
+        :param spots_available:
+        :return:
+        """
         self.write_to_log('sending init packet')
         packet = ParKingPacket.pack_init_packet(config.UNIQUE_ID, config.CAPACITY, spots_available)
         self.sock.sendall(packet)
         self.write_to_log('init packet send')
 
     def send_goes_out_packet(self, z_value):
+        """
+        This will send a goes_outs packet to the server
+        :param z_value:
+        :return:
+        """
         packet = ParKingPacket.pack_out_packet(config.UNIQUE_ID, z_value)
         self.sock.sendall(packet)
 
     def send_goes_in_packet(self, z_value):
+        """
+        This will send a goes_ins packet to the server
+        :param z_value:
+        :return:
+        """
         packet = ParKingPacket.pack_in_packet(config.UNIQUE_ID, z_value)
         self.sock.sendall(packet)
 
     def send_alive_packet(self):
+        """
+        This will send a keep_alive packet to the server
+        :return:
+        """
         packet = ParKingPacket.pack_alive_packet(config.UNIQUE_ID)
         self.sock.sendall(packet)
 
